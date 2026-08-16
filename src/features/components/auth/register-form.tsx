@@ -11,29 +11,34 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 
 
-const loginSchema =z.object(
+const registerSchema =z.object(
     {
       email: z.string().email("please provide valid email "),
-      password:z.string().min(6,"password should at least 6 char")
+      password:z.string().min(6,"password should at least 6 char"),
+      confirmPassword:z.string()
     }
-)
+).refine((data)=>data.password===data.confirmPassword,{
+    message:"password not matched",
+    path:["confirmPassword"]
+})
 
-type loginFormValue = z.infer<typeof loginSchema>
+type registerFormvalues = z.infer<typeof registerSchema>
 
-export function LoginForm(){
+export function RegisterForm(){
 
     const router=useRouter()
 
 
-    const form =useForm<loginFormValue>({
-        resolver:zodResolver(loginSchema),
+    const form =useForm<registerFormvalues>({
+        resolver:zodResolver(registerSchema),
         defaultValues:{
             email:"",
-            password:""
+            password:"",
+            confirmPassword:""
         }
     })
 
-    const onSubmit=async (values:loginFormValue)=>{
+    const onSubmit=async (values:registerFormvalues)=>{
         console.log(values)
     }
 
@@ -44,10 +49,10 @@ export function LoginForm(){
     <Card>
         <CardHeader className="text-center">
             <CardTitle>
-                Welcome back
+                Get Started
             </CardTitle>
             <CardDescription>
-                Login to continue
+                Create your account ! 
             </CardDescription>
             <CardContent>
                 <Form {...form}>
@@ -100,12 +105,31 @@ export function LoginForm(){
                                 )}>
 
                                 </FormField>
+                                 <FormField 
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({field})=>(
+                                    <FormItem>
+                                        <FormLabel>
+                                            Confirm Password
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                            type="password"
+                                            placeholder="confirm your password "
+                                            {...field}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}>
+
+                                </FormField>
                                 <Button type="submit" className="w-full" disabled={pending}>
-                                    Login
+                                    Sign-up
                                 </Button>
-                                <div className="text-center text-sm"> Don't have an account ?{" "}
+                                <div className="text-center text-sm"> Already  have an account ?{" "}
                                     <Link href="/signup " className="underline underline-offset-4">
-                                    Sign up
+                                    Login
                                     </Link>
                                 </div>
                             </div>
