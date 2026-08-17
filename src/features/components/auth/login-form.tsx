@@ -5,10 +5,11 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
-import { FieldGroup } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { authClient } from "@/lib/auth-client"
+import { toast } from "sonner"
 
 
 const loginSchema =z.object(
@@ -34,7 +35,17 @@ export function LoginForm(){
     })
 
     const onSubmit=async (values:loginFormValue)=>{
-        console.log(values)
+        await authClient.signIn.email({
+            email:values.email,
+            password:values.password,
+            callbackURL :"/"
+        },{
+            onSuccess:()=>{
+                router.push("/")
+            },onError:(ctx)=>{
+                toast.error(ctx.error.message)
+            }
+        })
     }
 
     const pending = form.formState.isSubmitting
