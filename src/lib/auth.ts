@@ -8,4 +8,5 @@ export const auth = betterAuth({
     enabled: true, 
     autoSignIn:true
   }, 
+  baseURL:process.env.BETTER_AUTH_URL
 })
