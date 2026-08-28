@@ -19,6 +19,7 @@ model User {
   email         String    @unique
   name          String?
   posts         Post[]
+  workflows     Workflow[]
   emailVerified Boolean   @default(false)
   image         String?
   createdAt     DateTime  @default(now())
@@ -89,4 +90,9 @@ model Verification {
 model Workflow {
   id   String @id @default(cuid())
   name String
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
