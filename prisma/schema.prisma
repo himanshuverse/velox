@@ -18,7 +18,6 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
-  posts         Post[]
   workflows     Workflow[]
   emailVerified Boolean   @default(false)
   image         String?
@@ -30,14 +29,6 @@ model User {
   @@map("user")
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  authorId  String
-  author    User    @relation(fields: [authorId], references: [id])
-}
 
 model Session {
   id        String   @id
@@ -88,11 +79,32 @@ model Verification {
 }
 
 model Workflow {
-  id   String @id @default(cuid())
-  name String
-  userId String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  nodes       Json     @default("[]")
+  edges       Json     @default("[]")
+  status      String   @default("draft")   // "draft" | "active" | "paused"
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs        WorkflowRun[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([userId])
+} 
+
+model WorkflowRun {
+  id          String   @id @default(cuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status      String   @default("pending")   // "pending" | "running" | "completed" | "failed"
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  logs        Json     @default("[]")
+
+  @@index([workflowId])
 }
+
+
+
