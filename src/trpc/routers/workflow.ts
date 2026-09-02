@@ -70,8 +70,15 @@ export const workflowRouter = createTRPCRouter({
                     nodes: [],
                     edges: [],
                     userId: ctx.auth.user.id
-
-                }
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
             })
         }),
 
@@ -102,12 +109,18 @@ export const workflowRouter = createTRPCRouter({
                     ...(input.status !== undefined && { status: input.status }),
                     ...(input.nodes !== undefined && { nodes: input.nodes as unknown as Prisma.InputJsonValue }),
                     ...(input.edges !== undefined && { edges: input.edges as unknown as Prisma.InputJsonValue }),
-                }
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    status: true,
+                    updatedAt: true,
+                },
             })
         }),
 
     //5.delete the workflow
-
     delete: protectedProcedure
         .input(workflowIdSchema)
         .mutation(async ({ ctx, input }) => {
@@ -128,12 +141,14 @@ export const workflowRouter = createTRPCRouter({
             return prisma.workflow.delete({
                 where: {
                     id: input.id
-                }
+                },
+                select: {
+                    id: true,
+                },
             })
         }),
 
     // 6. duplicate the workflow
-
     duplicate: protectedProcedure
         .input(workflowIdSchema)
         .mutation(async ({ ctx, input }) => {
@@ -156,6 +171,14 @@ export const workflowRouter = createTRPCRouter({
                     nodes: original.nodes ?? [],
                     edges: original.edges ?? [],
                     userId: ctx.auth.user.id,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
                 },
             });
         })
