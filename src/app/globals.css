@@ -162,7 +162,29 @@ body {
   animation-play-state: paused;
 }
 
+/* Custom Flow Edge Animation */
+@keyframes flowAnimation {
+  from {
+    stroke-dashoffset: 24;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* React Flow custom styling adjustments */
 .react-flow__attribution {
   display: none !important;
+}
+
+
+.animated-edge {
+  animation: edge-flow 1s linear infinite;
+}
+
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: -10;
+  }
 }
