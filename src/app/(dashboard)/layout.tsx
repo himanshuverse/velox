@@ -12,9 +12,9 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-neutral-950 text-neutral-100">
+      <div className="flex h-screen w-full bg-neutral-950 text-neutral-100 overflow-hidden">
         <AppSidebar user={session.user} />
-        <SidebarInset className="flex flex-1 flex-col bg-neutral-950">
+        <SidebarInset className="flex flex-1 flex-col h-full min-h-0 overflow-hidden bg-neutral-950">
           {/* Top Header Bar */}
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-neutral-800/80 px-4">
             <SidebarTrigger className="-ml-1 text-neutral-400 hover:text-white" />
