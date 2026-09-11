@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 import prisma from "@/lib/db";
 import { TRPCError } from "@trpc/server";
 import { Prisma } from "@/generated/prisma/client"
+import { inngest } from "@/inngest/client";
 
 export const workflowRouter = createTRPCRouter({
 
@@ -181,7 +182,78 @@ export const workflowRouter = createTRPCRouter({
                     updatedAt: true,
                 },
             });
+        }),
+
+    // Procedure 7: trigger a manual run
+    triggerRun: protectedProcedure
+        .input(workflowIdSchema)
+        .mutation(async ({ ctx, input }) => {
+            // 1. Ownership check: workflow must belong to ctx.auth.user.id
+            const workflow = await prisma.workflow.findFirst({
+                where: {
+                    id: input.id,
+                    userId: ctx.auth.user.id
+                }
+
+            })
+            if (!workflow) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "workflow not found"
+                })
+            }
+            // 2. Create a WorkflowRun row with status: "pending"
+            const run = await prisma.workflowRun.create({
+                data: {
+                    workflowId: input.id,
+                    status: "pending",
+                    startedAt: new Date(),
+
+                }
+            })
+            // 3. Send inngest event: inngest.send({ name: "workflow/run.triggered", data: { runId, workflowId } })
+
+            const inngest_event = await inngest.send({
+                name: "workflow/run.triggered",
+                data: {
+                    runId: run.id,
+                    workflowId: workflow.id
+                }
+            })
+
+            console.log("Inngest event sent:", inngest_event)
+            // 4. Return { runId }
+            return { runId: run.id }
+        }),
+
+    // Procedure 8: get run history for a workflow
+    getRuns: protectedProcedure
+        .input(workflowIdSchema)
+        .query(async ({ ctx, input }) => {
+            // Return last 20 WorkflowRun rows for this workflow
+            // ordered by startedAt desc
+            // include: id, status, startedAt, completedAt, logs
+            const runs = await prisma.workflowRun.findMany({
+                where: {
+                    workflowId: input.id,
+                    workflow: {
+                        userId: ctx.auth.user.id,
+                    },
+                },
+                take: 20,
+                orderBy: { startedAt: "desc" },
+                select: {
+                    id: true,
+                    status: true,
+                    startedAt: true,
+                    completedAt: true,
+                    logs: true,
+                },
+            });
+
+            return runs;
         })
+
 
 
 })
