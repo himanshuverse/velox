@@ -179,12 +179,71 @@ body {
 }
 
 
-.animated-edge {
-  animation: edge-flow 1s linear infinite;
+/* React Flow custom edge animations */
+@keyframes edge-flow-continuous {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
-@keyframes edge-flow {
-  to {
-    stroke-dashoffset: -10;
+@keyframes edge-flow-fast {
+  from {
+    stroke-dashoffset: 24;
   }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animated-edge-continuous {
+  animation: edge-flow-continuous 1.2s linear infinite !important;
+}
+
+.animated-edge-running {
+  animation: edge-flow-fast 0.5s linear infinite !important;
+}
+
+/* Node execution status animations */
+@keyframes node-pulse-amber {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6), 0 0 25px rgba(245, 158, 11, 0.4);
+    transform: scale(1.05);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0), 0 0 35px rgba(245, 158, 11, 0.8);
+    transform: scale(1.07);
+  }
+}
+
+@keyframes node-pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8), 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0), 0 0 30px rgba(16, 185, 129, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 0 15px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@keyframes node-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.animate-node-running {
+  animation: node-pulse-amber 1.4s ease-in-out infinite !important;
+}
+
+.animate-node-success {
+  animation: node-pulse-green 1.2s ease-out forwards !important;
+}
+
+.animate-node-failed {
+  animation: node-shake 0.4s ease-in-out !important;
 }
