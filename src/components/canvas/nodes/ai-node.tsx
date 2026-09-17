@@ -4,23 +4,26 @@ import { memo } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Sparkles } from "lucide-react";
 import { NodeData } from "./trigger-node";
+import { NodeStatusBadge, getNodeStatusStyles } from "./node-status-badge";
 
 export const AiNode = memo(({ data, selected }: NodeProps) => {
   const nodeData = data as NodeData;
   const label = nodeData.label || "AI Prompt";
   const model = (nodeData.config?.model as string) || "GPT-4o";
   const subtitle = nodeData.subtitle || `Run with ${model}`;
+  const executionStatus = nodeData.executionStatus;
 
   return (
     <div className="flex flex-col items-center select-none group">
       {/* The Squircle Node Box */}
       <div
-        className={`relative flex h-[74px] w-[74px] items-center justify-center rounded-[20px] border transition-all duration-150 ${
+        className={`relative flex h-[74px] w-[74px] items-center justify-center rounded-[20px] border transition-all duration-200 ${getNodeStatusStyles(
+          executionStatus,
           selected
-            ? "border-cyan-500 bg-[#262c38] shadow-lg shadow-cyan-950/50 ring-2 ring-cyan-500/40 scale-105"
-            : "border-[#373f50] bg-[#202530] hover:border-[#4f5b72] hover:bg-[#252b37] shadow-md"
-        }`}
+        )}`}
       >
+        {/* Real-time Execution Status Badge */}
+        <NodeStatusBadge status={executionStatus} />
         {/* Left Input Handle */}
         <Handle
           type="target"

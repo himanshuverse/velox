@@ -4,12 +4,14 @@ import { memo } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { MousePointer2 } from "lucide-react";
 import { getNodeMeta } from "@/lib/canvas/node-meta";
+import { NodeStatusBadge, getNodeStatusStyles } from "./node-status-badge";
 
 export interface NodeData {
   label?: string;
   subtype?: string;
   subtitle?: string;
   config?: Record<string, unknown>;
+  executionStatus?: string;
   [key: string]: unknown;
 }
 
@@ -20,17 +22,20 @@ export const TriggerNode = memo(({ data, selected }: NodeProps) => {
 
   const label = nodeData.label || meta.label;
   const subtitle = nodeData.subtitle || meta.subtitle || "When clicking 'Execute workflow'";
+  const executionStatus = nodeData.executionStatus;
 
   return (
     <div className="flex flex-col items-center select-none group">
       {/* The Squircle Node Box */}
       <div
-        className={`relative flex h-[74px] w-[74px] items-center justify-center rounded-[20px] border transition-all duration-150 ${
+        className={`relative flex h-[74px] w-[74px] items-center justify-center rounded-[20px] border transition-all duration-200 ${getNodeStatusStyles(
+          executionStatus,
           selected
-            ? "border-orange-500 bg-[#262c38] shadow-lg shadow-orange-950/50 ring-2 ring-orange-500/40 scale-105"
-            : "border-[#373f50] bg-[#202530] hover:border-[#4f5b72] hover:bg-[#252b37] shadow-md"
-        }`}
+        )}`}
       >
+        {/* Real-time Execution Status Badge */}
+        <NodeStatusBadge status={executionStatus} />
+
         {/* Centered Large Logo / Icon */}
         <Icon className={`h-8 w-8 stroke-[2.2] ${meta.iconColor || "text-orange-500"}`} />
 

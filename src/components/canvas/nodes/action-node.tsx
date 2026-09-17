@@ -5,6 +5,7 @@ import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Globe, AlertTriangle } from "lucide-react";
 import { getNodeMeta } from "@/lib/canvas/node-meta";
 import { NodeData } from "./trigger-node";
+import { NodeStatusBadge, getNodeStatusStyles } from "./node-status-badge";
 
 export const ActionNode = memo(({ data, selected }: NodeProps) => {
   const nodeData = data as NodeData;
@@ -13,6 +14,7 @@ export const ActionNode = memo(({ data, selected }: NodeProps) => {
 
   const label = nodeData.label || meta.label;
   const subtitle = nodeData.subtitle || meta.subtitle || "Configure action";
+  const executionStatus = nodeData.executionStatus;
 
   // Display warning icon if essential configuration is missing
   const isUnconfigured =
@@ -24,12 +26,13 @@ export const ActionNode = memo(({ data, selected }: NodeProps) => {
     <div className="flex flex-col items-center select-none group">
       {/* The Squircle Node Box */}
       <div
-        className={`relative flex h-[74px] w-[74px] items-center justify-center rounded-[20px] border transition-all duration-150 ${
+        className={`relative flex h-[74px] w-[74px] items-center justify-center rounded-[20px] border transition-all duration-200 ${getNodeStatusStyles(
+          executionStatus,
           selected
-            ? "border-orange-500 bg-[#262c38] shadow-lg shadow-orange-950/50 ring-2 ring-orange-500/40 scale-105"
-            : "border-[#373f50] bg-[#202530] hover:border-[#4f5b72] hover:bg-[#252b37] shadow-md"
-        }`}
+        )}`}
       >
+        {/* Real-time Execution Status Badge */}
+        <NodeStatusBadge status={executionStatus} />
         {/* Left Input Handle */}
         <Handle
           type="target"
