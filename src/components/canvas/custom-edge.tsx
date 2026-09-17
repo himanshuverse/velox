@@ -19,6 +19,7 @@ export const CustomEdge = memo(
         style = {},
         markerEnd,
         selected,
+        data,
     }: EdgeProps) => {
         // Horizontal step path with smooth rounded corner radius
         const [edgePath] = getSmoothStepPath({
@@ -30,6 +31,21 @@ export const CustomEdge = memo(
             targetPosition,
             borderRadius: 8,
         });
+
+        const edgeData = (data ?? {}) as { executionStatus?: string };
+        const isRunning = edgeData.executionStatus === "running";
+        const isSuccess = edgeData.executionStatus === "success";
+
+        let strokeColor = selected ? "#f97316" : "#525e70";
+        let filterEffect = selected ? "drop-shadow(0 0 4px rgba(249, 115, 22, 0.5))" : undefined;
+
+        if (isRunning) {
+            strokeColor = "#f59e0b";
+            filterEffect = "drop-shadow(0 0 6px rgba(245, 158, 11, 0.8))";
+        } else if (isSuccess) {
+            strokeColor = "#10b981";
+            filterEffect = "drop-shadow(0 0 5px rgba(16, 185, 129, 0.6))";
+        }
 
         return (
             <>
@@ -51,14 +67,14 @@ export const CustomEdge = memo(
                     markerEnd={markerEnd}
                     style={{
                         ...style,
-                        strokeWidth: selected ? 2.5 : 2,
-                        stroke: selected ? "#f97316" : "#525e70",
+                        strokeWidth: isRunning || isSuccess || selected ? 2.5 : 2,
+                        stroke: strokeColor,
                         strokeDasharray: "5 5",
                         strokeLinecap: "round",
-                        transition: "stroke 0.2s, stroke-width 0.2s",
-                        filter: selected ? "drop-shadow(0 0 4px rgba(249, 115, 22, 0.5))" : undefined,
+                        transition: "stroke 0.25s, stroke-width 0.25s",
+                        filter: filterEffect,
                     }}
-                    className="animated-edge"
+                    className={isRunning ? "animated-edge-running" : "animated-edge-continuous"}
                 />
             </>
         );

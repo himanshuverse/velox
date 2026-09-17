@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Check, Loader2, Sparkles, Zap, Play } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Play, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTRPC } from "@/trpc/client";
@@ -14,6 +14,10 @@ interface CanvasHeaderProps {
   status: string;
   isSaving: boolean;
   lastSavedAt: Date | null;
+  onTriggerRun?: () => void;
+  isTriggering?: boolean;
+  onToggleRuns?: () => void;
+  isRunsOpen?: boolean;
 }
 
 export function CanvasHeader({
@@ -22,6 +26,10 @@ export function CanvasHeader({
   status,
   isSaving,
   lastSavedAt,
+  onTriggerRun,
+  isTriggering = false,
+  onToggleRuns,
+  isRunsOpen = false,
 }: CanvasHeaderProps) {
   const [name, setName] = useState(initialName);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -128,12 +136,35 @@ export function CanvasHeader({
           )}
         </div>
 
+        {/* Runs History Toggle */}
+        {onToggleRuns && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggleRuns}
+            className={`gap-1.5 h-8 text-xs font-mono transition-colors border-neutral-800 ${
+              isRunsOpen
+                ? "bg-neutral-800 text-orange-400 border-orange-500/40"
+                : "bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800"
+            }`}
+          >
+            <History className="h-3.5 w-3.5" />
+            Runs
+          </Button>
+        )}
+
+        {/* Run Execution Trigger */}
         <Button
           size="sm"
-          className="bg-orange-600 hover:bg-orange-500 text-white font-medium gap-1.5 h-8 shadow-md shadow-orange-600/20"
-          onClick={() => alert("Execution Engine wiring in Phase 4!")}
+          disabled={isTriggering}
+          className="bg-orange-600 hover:bg-orange-500 text-white font-medium gap-1.5 h-8 shadow-md shadow-orange-600/20 text-xs"
+          onClick={onTriggerRun}
         >
-          <Play className="h-3.5 w-3.5 fill-current" />
+          {isTriggering ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Play className="h-3.5 w-3.5 fill-current" />
+          )}
           Run
         </Button>
       </div>
