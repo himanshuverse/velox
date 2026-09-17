@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -23,6 +23,7 @@ import { CustomEdge } from "./custom-edge";
 import { CanvasHeader } from "./canvas-header";
 import { NodeSidebar } from "./sidebar/node-sidebar";
 import { NodeConfigPanel } from "./config/node-config-panel";
+import { RunHistoryPanel } from "./runs/run-history-panel";
 import {
   toReactFlowNodes,
   toReactFlowEdges,
@@ -30,8 +31,9 @@ import {
   toDbEdges,
 } from "@/lib/canvas/transform";
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { WorkflowNode, WorkflowEdge } from "@/lib/types/workflow";
+import { topologicalSort } from "@/lib/execution/topological-sort";
 
 interface WorkflowCanvasProps {
   workflow: {
@@ -84,6 +86,7 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isRunsOpen, setIsRunsOpen] = useState(false);
 
   // Initial node state from DB or starter template
   const initialDbNodes =
@@ -123,6 +126,92 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
       },
     })
   );
+
+  // tRPC manual execution mutation
+  const triggerRunMutation = useMutation(
+    trpc.workflow.triggerRun.mutationOptions({
+      onSuccess: () => {
+        setIsRunsOpen(true);
+        setSelectedNodeId(null);
+        queryClient.invalidateQueries(
+          trpc.workflow.getRuns.queryOptions({ id: workflow.id })
+        );
+      },
+      onError: (err) => {
+        alert(`Failed to trigger workflow run: ${err.message}`);
+      },
+    })
+  );
+
+  // High-frequency live polling: when Inngest is executing, poll every 250ms
+  // so the canvas nodes light up in lockstep with Inngest's real step runner!
+  const runsQueryOpts = trpc.workflow.getRuns.queryOptions({ id: workflow.id });
+  const { data: runsData } = useQuery({
+    ...runsQueryOpts,
+    refetchInterval: (query) => {
+      const latest = (query.state.data as any[])?.[0];
+      const isLive = latest?.status === "running" || latest?.status === "pending";
+      return isLive ? 250 : 3000;
+    },
+  });
+
+  const latestRun = (runsData as any[])?.[0];
+
+  // Map each nodeId to its live execution status from Inngest's actual step logs in DB
+  const nodeExecutionStatusMap = useMemo(() => {
+    if (!latestRun || !Array.isArray(latestRun.logs)) return {};
+    const map: Record<string, "running" | "success" | "failed" | "skipped"> = {};
+    for (const log of latestRun.logs as any[]) {
+      if (
+        log?.nodeId &&
+        (log.status === "running" ||
+          log.status === "success" ||
+          log.status === "failed" ||
+          log.status === "skipped")
+      ) {
+        map[log.nodeId] = log.status;
+      }
+    }
+    return map;
+  }, [latestRun]);
+
+  // Project live Inngest execution status into React Flow nodes
+  const animatedNodes = useMemo(() => {
+    return nodes.map((node) => {
+      const status = nodeExecutionStatusMap[node.id] || "idle";
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          executionStatus: status,
+        },
+      };
+    });
+  }, [nodes, nodeExecutionStatusMap]);
+
+  // Project live Inngest execution status into React Flow edges (glowing signals)
+  const animatedEdges = useMemo(() => {
+    return edges.map((edge) => {
+      const sourceStatus = nodeExecutionStatusMap[edge.source];
+      const status =
+        sourceStatus === "running"
+          ? "running"
+          : sourceStatus === "success"
+          ? "success"
+          : undefined;
+      return {
+        ...edge,
+        data: {
+          ...(edge.data as any),
+          executionStatus: status,
+        },
+      };
+    });
+  }, [edges, nodeExecutionStatusMap]);
+
+  const handleTriggerRun = useCallback(() => {
+    triggerRunMutation.mutate({ id: workflow.id });
+  }, [triggerRunMutation, workflow.id]);
 
   // Handle new edge connection
   const onConnect = useCallback(
@@ -187,6 +276,7 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
   // Node selection handlers
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNodeId(node.id);
+    setIsRunsOpen(false);
   }, []);
 
   const onPaneClick = useCallback(() => {
@@ -267,6 +357,13 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
         status={workflow.status}
         isSaving={isSaving}
         lastSavedAt={lastSavedAt}
+        onTriggerRun={handleTriggerRun}
+        isTriggering={triggerRunMutation.isPending}
+        onToggleRuns={() => {
+          setIsRunsOpen((prev) => !prev);
+          if (!isRunsOpen) setSelectedNodeId(null);
+        }}
+        isRunsOpen={isRunsOpen}
       />
 
       {/* Studio Layout (Infinite Canvas + Right Side Panel) */}
@@ -278,8 +375,8 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
           onDrop={onDrop}
         >
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={animatedNodes}
+            edges={animatedEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -328,8 +425,16 @@ function WorkflowCanvasInner({ workflow }: WorkflowCanvasProps) {
           </ReactFlow>
         </div>
 
-        {/* Right Side Dock: Configuration Inspector if node selected, else Node Library */}
-        {selectedNode ? (
+        {/* Right Side Dock: Run History > Configuration Inspector > Node Library */}
+        {isRunsOpen ? (
+          <RunHistoryPanel
+            workflowId={workflow.id}
+            isOpen={isRunsOpen}
+            onClose={() => setIsRunsOpen(false)}
+            onTriggerRun={handleTriggerRun}
+            isTriggering={triggerRunMutation.isPending}
+          />
+        ) : selectedNode ? (
           <NodeConfigPanel
             node={selectedNode}
             workflowId={workflow.id}
