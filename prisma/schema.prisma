@@ -15,14 +15,15 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
+  id            String       @id @default(cuid())
+  email         String       @unique
   name          String?
   workflows     Workflow[]
-  emailVerified Boolean   @default(false)
+  credentials   Credential[]
+  emailVerified Boolean      @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   sessions      Session[]
   accounts      Account[]
 
@@ -106,5 +107,17 @@ model WorkflowRun {
   @@index([workflowId])
 }
 
+model Credential {
+  id        String   @id @default(cuid())
+  name      String                        // e.g. "My Discord Webhook"
+  type      String                        // e.g. "discord_webhook_url" | "slack_bot_token" | "github_token" | etc.
+  value     String                        // AES-256-GCM encrypted ciphertext
+  iv        String                        // Initialization vector for decryption (hex)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-
+  @@index([userId])
+  @@unique([userId, name])
+}
