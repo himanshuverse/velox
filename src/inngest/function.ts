@@ -159,12 +159,15 @@ export const runWorkflow = inngest.createFunction(
 
     // 5. Finalize run state
     const finalStatus = hasFailure ? "failed" : "completed";
+    const failedLog = executionLogs.find((l) => l.status === "failed");
+    const errorMessage = failedLog?.error || (hasFailure ? "One or more nodes failed" : null);
 
     await step.run("finalize-run", async () => {
       return prisma.workflowRun.update({
         where: { id: runId },
         data: {
           status: finalStatus,
+          error: errorMessage,
           completedAt: new Date(),
           logs: executionLogs as unknown as Prisma.InputJsonValue,
         },
