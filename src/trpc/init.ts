@@ -30,6 +30,7 @@ const t = initTRPC
 
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
+export const router = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 export const protectedProcedure=baseProcedure.use(async({
