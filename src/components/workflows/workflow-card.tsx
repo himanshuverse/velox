@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Clock,
   Layers,
+  History,
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -130,6 +131,15 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
                 >
                   <ExternalLink className="h-4 w-4 text-neutral-400" />
                   <span>Open Canvas</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/workflows/${workflow.id}/runs`}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <History className="h-4 w-4 text-neutral-400" />
+                  <span>View Runs</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem

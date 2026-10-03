@@ -207,8 +207,8 @@ export const workflowRouter = createTRPCRouter({
                 data: {
                     workflowId: input.id,
                     status: "pending",
+                    trigger: "manual",
                     startedAt: new Date(),
-
                 }
             })
             // 3. Send inngest event: inngest.send({ name: "workflow/run.triggered", data: { runId, workflowId } })

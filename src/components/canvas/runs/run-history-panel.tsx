@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   X,
   History,
@@ -77,6 +78,13 @@ export function RunHistoryPanel({
         </div>
 
         <div className="flex items-center gap-1">
+          <Link
+            href={`/workflows/${workflowId}/runs`}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-colors"
+            title="Open dedicated runs page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Link>
           <Button
             variant="ghost"
             size="icon"

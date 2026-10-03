@@ -60,6 +60,7 @@ export async function POST(
       data: {
         workflowId: workflow.id,
         status: "pending",
+        trigger: "webhook",
         startedAt: new Date(),
       },
     });
